@@ -1,48 +1,66 @@
-#!/usr/bin/env node
+const amqplib = require('amqplib')
 
-var amqp = require('amqplib/callback_api');
-
-amqp.connect('amqp://localhost', function(error0, connection) {
-    if (error0) {
-        throw error0;
-    }
-    connection.createChannel(function(error1, channel) {
-        if (error1) {
-            throw error1;
-        }
-        channel.assertQueue('', {
-            exclusive: true
-        }, function(error2, q) {
-            if (error2) {
-                throw error2;
-            }
-            var correlationId = generateUuid();
-
-            console.log(' [x] Requesting ', 'posts');
-
-            channel.consume(q.queue, function(msg) {
-                if (msg.properties.correlationId === correlationId) {
-                    console.log(' [.] Got %s', msg.content.toString());
-                    setTimeout(function() {
-                        connection.close();
-                        process.exit(0);
-                    }, 500);
-                }
-            }, {
-                noAck: true
-            });
-
-            channel.sendToQueue('tasks',
-                Buffer.from('posts'), {
-                    correlationId: correlationId,
-                    replyTo: q.queue
-                });
-        });
-    });
-});
-
-function generateUuid() {
-    return Math.random().toString() +
-        Math.random().toString() +
-        Math.random().toString();
+const createQueue = async (queue)=>{
+  try {
+    const connection = await amqplib.connect('amqp://localhost')
+    const channel = await connection.createChannel()
+    const q = await channel.assertQueue('', {exclusive: true})
+    return {connection, channel, q}
+  } catch (error) {
+    console.log(error);
+    return ''
+  }
 }
+
+const generateUuid = ()=>{
+  return Math.random().toString() + Math.random().toString() + Math.random().toString();
+}
+
+const consume = async (channel, queue, correlationId, callback)=>{
+  channel.consume(queue, function reply(msg) {
+    console.log(msg);
+    console.log(msg.properties.correlationId, correlationId);
+    if (msg.properties.correlationId === correlationId) {
+      console.log(msg.content.toString())
+      callback({
+        content: msg.content.toString(),
+        replyTo: msg.properties.replyTo,
+        correlationId: msg.properties.correlationId
+      })
+      channel.ack(msg)
+    }
+  })
+}
+
+const sendToQueue = (channel, payload, queue, q, correlationId)=>{
+  channel.sendToQueue(queue,
+    Buffer.from(payload), {
+      correlationId: correlationId,
+      replyTo: q.queue
+    }
+  )
+}
+
+const client = async (serviceType)=>{
+  const queue = 'tasks'
+  try {
+    const {connection, channel, q} = await createQueue(queue)
+    const correlationId = generateUuid()
+    sendToQueue(channel, serviceType, queue, q, correlationId)
+
+    
+
+    consume(channel, q.queue, correlationId, async (data)=>{
+      console.log(data.content);
+      setTimeout(function() {
+        connection.close();
+      }, 500);
+    })
+  } catch (error) {
+    console.log('channel not created', error); 
+    process.exit(0)
+  }
+}
+
+client('posts')
+
