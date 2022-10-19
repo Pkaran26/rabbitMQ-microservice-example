@@ -18,10 +18,7 @@ const generateUuid = ()=>{
 
 const consume = async (channel, queue, correlationId, callback)=>{
   channel.consume(queue, function reply(msg) {
-    console.log(msg);
-    console.log(msg.properties.correlationId, correlationId);
     if (msg.properties.correlationId === correlationId) {
-      console.log(msg.content.toString())
       callback({
         content: msg.content.toString(),
         replyTo: msg.properties.replyTo,
@@ -41,26 +38,29 @@ const sendToQueue = (channel, payload, queue, q, correlationId)=>{
   )
 }
 
-const client = async (serviceType)=>{
+const clientService = async (serviceType, callback)=>{
   const queue = 'tasks'
   try {
     const {connection, channel, q} = await createQueue(queue)
     const correlationId = generateUuid()
     sendToQueue(channel, serviceType, queue, q, correlationId)
 
-    
-
     consume(channel, q.queue, correlationId, async (data)=>{
-      console.log(data.content);
+      callback(data.content);
       setTimeout(function() {
         connection.close();
       }, 500);
     })
   } catch (error) {
     console.log('channel not created', error); 
+    callback({
+      success: false,
+      message: 'server error'
+    })
     process.exit(0)
   }
 }
 
-client('posts')
+//clientService('posts')
 
+module.exports = clientService
