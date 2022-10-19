@@ -1,4 +1,4 @@
-const axios = require('axios');
+const axios = require('axios')
 
 const BASE_URL = 'https://jsonplaceholder.typicode.com'
 

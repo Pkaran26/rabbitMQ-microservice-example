@@ -1,5 +1,5 @@
 const amqplib = require('amqplib')
-
+var fs = require('fs')
 const { getPosts, getComments, getUsers } = require('./services')
 
 let cache = []
@@ -18,7 +18,7 @@ const createQueue = async (queue)=>{
 
 const consume = async (channel, queue, callback)=>{
   channel.consume(queue, function reply(msg) {
-    console.log('Received Message: ', msg.content.toString());
+    console.log('Received Message: ', msg.content.toString())
 
     callback({
       content: msg.content.toString(),
@@ -58,10 +58,14 @@ const rmqServer = async ()=>{
         jobID: data.correlationId,
         payload: payload
       }]
+      fs.writeFile('cache.txt', JSON.stringify(cache, null, 2), function (err) {
+        if (err) throw err
+        console.log('Cache Saved')
+      })
       sendToQueue(channel, JSON.stringify({jobID: data.correlationId, ...payload}), data.replyTo, data.correlationId)
     })
   } catch (error) {
-    console.log('channel not created'); 
+    console.log('channel not created') 
   }
 }
 
