@@ -2,7 +2,7 @@ const express = require('express')
 const cors = require('cors')
 const rmqServer = require('./rmq-server')
 const clientService = require('./client')
-var fs = require('fs')
+const fs = require('fs')
 
 const app = express()
 rmqServer()
@@ -19,7 +19,6 @@ app.get('/api/:api/:type', async (req, res)=>{
 app.get('/status/:jobID', async (req, res)=>{
   fs.readFile('./cache.txt', function(err, cache) {
     const data = JSON.parse(cache).filter((e)=>{
-      console.log(e.jobID, req.params.jobID)
       return e.jobID == req.params.jobID
     })
     res.json(data[0])
