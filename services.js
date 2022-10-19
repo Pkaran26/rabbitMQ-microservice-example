@@ -3,9 +3,10 @@ const axios = require('axios');
 const BASE_URL = 'https://jsonplaceholder.typicode.com'
 
 const fetchData = async (url)=>{
-  const result = await axios.get(`${BASE_URL}${url}`)
-  .catch(err=>{
-    err.response
+  const result = await axios.get(`${BASE_URL}${url}`, {
+    headers: { 'access-control-allow-origin': '*' }
+  }).catch(err=>{
+    return err.response
   })
 
   if (result && result.data && result.data.length > 0) {
@@ -15,7 +16,7 @@ const fetchData = async (url)=>{
       data: result.data
     }
   } else {
-    console.error(result.data)
+    // console.error(result.data)
     return {
       success: false,
       message: 'server error'
