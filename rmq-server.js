@@ -1,20 +1,9 @@
-const amqplib = require('amqplib')
+const RabbitMQ = require('./rabbitmq')
 var fs = require('fs')
 const { getPosts, getComments, getUsers } = require('./services')
 
 let cache = []
 
-const createQueue = async (queue)=>{
-  try {
-    const conn = await amqplib.connect('amqp://localhost')
-    const channel = await conn.createChannel()
-    await channel.assertQueue(queue, {durable: false})
-    console.log('Awaiting requests')
-    return channel
-  } catch (error) {
-    return ''
-  }
-}
 
 const consume = async (channel, queue, callback)=>{
   channel.consume(queue, function reply(msg) {
@@ -29,14 +18,6 @@ const consume = async (channel, queue, callback)=>{
   })
 }
 
-const sendToQueue = (channel, payload, replyTo, correlationId)=>{
-  channel.sendToQueue(replyTo,
-    Buffer.from(payload), {
-      correlationId: correlationId
-    }
-  )
-}
-
 const filterService = async (content) =>{
   if (content == 'posts') {
     return await getPosts()
@@ -44,6 +25,11 @@ const filterService = async (content) =>{
     return await getComments()
   } else if (content == 'users') {
     return await getUsers()
+  } else {
+    return {
+      status: false,
+      message: 'path not found'
+    }
   }
 }
 
@@ -51,8 +37,11 @@ const filterService = async (content) =>{
 const rmqServer = async ()=>{
   const queue = 'tasks'
   try {
-    const channel = await createQueue(queue)
-    consume(channel, queue, async (data)=>{
+    const rabbitMQ = new RabbitMQ()
+    await rabbitMQ.createChannel()
+    await rabbitMQ.createServerQueue()
+
+    consume(rabbitMQ.channel, queue, async (data)=>{
       const payload = await filterService(data.content)
       cache = [...cache, {
         jobID: data.correlationId,
@@ -62,7 +51,7 @@ const rmqServer = async ()=>{
         if (err) throw err
         console.log('Cache Saved')
       })
-      sendToQueue(channel, JSON.stringify({jobID: data.correlationId, ...payload}), data.replyTo, data.correlationId)
+      rabbitMQ.sendToClient(JSON.stringify({jobID: data.correlationId, ...payload}), data.replyTo, data.correlationId)
     })
   } catch (error) {
     console.log('channel not created') 
