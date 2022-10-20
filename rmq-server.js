@@ -11,8 +11,7 @@ const consume = async (channel, queue, callback)=>{
 
     callback({
       content: msg.content.toString(),
-      replyTo: msg.properties.replyTo,
-      correlationId: msg.properties.correlationId
+      ...msg.properties
     })
     channel.ack(msg)
   })
