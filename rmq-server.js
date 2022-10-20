@@ -23,6 +23,10 @@ const rmqServer = async ()=>{
         }
         rabbitMQ.addToCache(data.correlationId, payload)
         rabbitMQ.sendToClient(JSON.stringify(payload), data.replyTo, data.correlationId)
+
+        setTimeout(function() {
+          childRabbitMQ.connection.close()
+        }, 500)
       })
     })
   } catch (error) {

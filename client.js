@@ -21,7 +21,7 @@ const clientService = async (serviceType, type, callback)=>{
     rabbitMQ.consumeByClient(q.queue, correlationId, async (data)=>{
       if (type !== 'async') {
         callback(data.content)
-        }
+      }
       setTimeout(function() {
         rabbitMQ.connection.close()
       }, 500)
