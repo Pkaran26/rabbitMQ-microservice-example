@@ -1,7 +1,9 @@
 const amqplib = require('amqplib')
+var fs = require('fs')
 
 class RabbitMQ {
   constructor () {
+    this.cache = []
     this.connection = ''
     this.channel = ''
   }
@@ -37,6 +39,16 @@ class RabbitMQ {
     return Math.random().toString() + Math.random().toString() + Math.random().toString()
   }
 
+  addToCache (jobID, payload) {
+    this.cache = [...this.cache, payload]
+    fs.writeFile('cache.txt', JSON.stringify(this.cache, null, 2), function (err) {
+      if (err) {
+        return console.log('Cache not saved')
+      }
+      console.log('Cache saved')
+    })
+  }
+
   sendToClient (payload, replyTo, correlationId) {
     this.channel.sendToQueue(replyTo,
       Buffer.from(payload), {
@@ -57,7 +69,7 @@ class RabbitMQ {
   consumeByServer = async (queue, callback)=>{
     const _vm = this
     this.channel.consume(queue, function reply(msg) {
-      console.log('Received Message: ', msg.content.toString())
+      console.log('Received Message: ') //msg.content.toString()
   
       callback({
         content: msg.content.toString(),

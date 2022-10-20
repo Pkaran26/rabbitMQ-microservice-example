@@ -1,11 +1,13 @@
 const express = require('express')
 const cors = require('cors')
 const rmqServer = require('./rmq-server')
+const serviceManager = require('./service-manager')
 const clientService = require('./client')
 const fs = require('fs')
 
 const app = express()
 rmqServer()
+serviceManager()
 
 app.use(express.json())
 app.use(cors())
