@@ -4,19 +4,6 @@ const { getPosts, getComments, getUsers } = require('./services')
 
 let cache = []
 
-
-const consume = async (channel, queue, callback)=>{
-  channel.consume(queue, function reply(msg) {
-    console.log('Received Message: ', msg.content.toString())
-
-    callback({
-      content: msg.content.toString(),
-      ...msg.properties
-    })
-    channel.ack(msg)
-  })
-}
-
 const filterService = async (content) =>{
   if (content == 'posts') {
     return await getPosts()
@@ -32,7 +19,6 @@ const filterService = async (content) =>{
   }
 }
 
-
 const rmqServer = async ()=>{
   const queue = 'tasks'
   try {
@@ -40,7 +26,7 @@ const rmqServer = async ()=>{
     await rabbitMQ.createChannel()
     await rabbitMQ.createServerQueue()
 
-    consume(rabbitMQ.channel, queue, async (data)=>{
+    rabbitMQ.consumeByServer(queue, async (data)=>{
       const payload = await filterService(data.content)
       cache = [...cache, {
         jobID: data.correlationId,

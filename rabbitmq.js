@@ -54,6 +54,19 @@ class RabbitMQ {
     )
   }
 
+  consumeByServer = async (queue, callback)=>{
+    const _vm = this
+    this.channel.consume(queue, function reply(msg) {
+      console.log('Received Message: ', msg.content.toString())
+  
+      callback({
+        content: msg.content.toString(),
+        ...msg.properties
+      })
+      _vm.channel.ack(msg)
+    })
+  }
+
 }
 
 module.exports = RabbitMQ
