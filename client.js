@@ -1,18 +1,5 @@
 const RabbitMQ = require('./rabbitmq')
 
-const consume = async (channel, queue, correlationId, callback)=>{
-  channel.consume(queue, function reply(msg) {
-    if (msg.properties.correlationId === correlationId) {
-      callback({
-        content: msg.content.toString(),
-        replyTo: msg.properties.replyTo,
-        correlationId: msg.properties.correlationId
-      })
-      channel.ack(msg)
-    }
-  })
-}
-
 const clientService = async (serviceType, type, callback)=>{
   const queue = 'tasks'
   try {
@@ -29,10 +16,9 @@ const clientService = async (serviceType, type, callback)=>{
         message: 'success',
         jobID: correlationId
       }))
-      
     }
 
-    consume(rabbitMQ.channel, q.queue, correlationId, async (data)=>{
+    rabbitMQ.consumeByClient(q.queue, correlationId, async (data)=>{
       if (type !== 'async') {
         callback(data.content)
         }

@@ -67,6 +67,20 @@ class RabbitMQ {
     })
   }
 
+
+  consumeByClient = (queue, correlationId, callback)=>{
+    const _vm = this
+    this.channel.consume(queue, function reply(msg) {
+      if (msg.properties.correlationId === correlationId) {
+        callback({
+          content: msg.content.toString(),
+          ...msg.properties
+        })
+        _vm.channel.ack(msg)
+      }
+    })
+  }
+
 }
 
 module.exports = RabbitMQ
