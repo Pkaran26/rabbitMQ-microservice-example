@@ -2,9 +2,8 @@ const RabbitMQ = require('../rabbitmq')
 const { getProducts } = require('./services')
 
 const filterService = async (content) =>{
-  console.log('content ', content);
-  if (content == 'products') {
-    return await getProducts()
+  if (content.params.api_name == 'products') {
+    return await getProducts(content)
   } else {
     return {
       status: false,

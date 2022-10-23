@@ -5,6 +5,7 @@ const blogManager = require('./services/blog-manager')
 const shopManager = require('./services/shop-manager')
 const clientService = require('./client')
 const fs = require('fs')
+const {extractData} = require('./utils/helper')
 
 const app = express()
 rmqServer()
@@ -15,8 +16,9 @@ app.use(express.json())
 app.use(cors())
 
 app.get('/api/:service_type/:api_name/:type', async (req, res)=>{
-  const {service_type, api_name, type} = req.params
-  await clientService(service_type, api_name, type, (data)=>{
+  const {service_type, type} = req.params
+  const payload = extractData(req)
+  await clientService(service_type, payload, type, (data)=>{
     res.json(JSON.parse(data))
   })
 })

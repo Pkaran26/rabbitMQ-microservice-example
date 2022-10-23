@@ -2,12 +2,12 @@ const RabbitMQ = require('../rabbitmq')
 const { getPosts, getComments, getUsers } = require('./services')
 
 const filterService = async (content) =>{
-  if (content == 'posts') {
-    return await getPosts()
-  } else if (content == 'comments') {
-    return await getComments()
-  } else if (content == 'users') {
-    return await getUsers()
+  if (content.params.api_name == 'posts') {
+    return await getPosts(content)
+  } else if (content.params.api_name == 'comments') {
+    return await getComments(content)
+  } else if (content.params.api_name == 'users') {
+    return await getUsers(content)
   } else {
     return {
       status: false,
@@ -24,7 +24,7 @@ const blogManager = async ()=>{
     await rabbitMQ.createServerQueue(queue)
 
     rabbitMQ.consumeByServer(queue, async (data)=>{
-      const payload = await filterService(data.content)
+      const payload = await filterService(JSON.parse(data.content))
       rabbitMQ.sendToClient(JSON.stringify(payload), data.replyTo, data.correlationId)
     })
   } catch (error) {

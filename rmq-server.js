@@ -6,7 +6,7 @@ const handleService = async (rabbitMQ, data, serviceQueue)=>{
   
   const q = await childRabbitMQ.createClientQueue()
   const correlationId = childRabbitMQ.generateUuid()
-  childRabbitMQ.sendToServer(data.content, serviceQueue, q, correlationId)
+  childRabbitMQ.sendToServer(JSON.stringify(data.content), serviceQueue, q, correlationId)
 
   childRabbitMQ.consumeByClient(q.queue, correlationId, (reply)=>{
     const payload = {
@@ -33,9 +33,9 @@ const rmqServer = async ()=>{
     await rabbitMQ.createServerQueue(taskQueue)
 
     rabbitMQ.consumeByServer(taskQueue, async (data)=>{
-      const {serviceType, apiName} = JSON.parse(data.content)
+      const {serviceType, payload} = JSON.parse(data.content)
       if (serviceQueues.includes(serviceType)) {
-        await handleService(rabbitMQ, {...data, content: apiName}, serviceType)
+        await handleService(rabbitMQ, {...data, content: payload}, serviceType)
       } else {
         rabbitMQ.sendToClient(JSON.stringify({success: false, message: "service does not matched"}), data.replyTo, data.correlationId)
       }
