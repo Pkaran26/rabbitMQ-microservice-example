@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require('uuid')
 
 class RabbitMQ {
   constructor () {
+    this.BASE_URI = 'amqp://localhost'
     this.cache = []
     this.connection = ''
     this.channel = ''
@@ -11,7 +12,7 @@ class RabbitMQ {
 
   async createChannel () {
     try {
-      this.connection = await amqplib.connect('amqp://localhost')
+      this.connection = await amqplib.connect(this.BASE_URI)
       this.channel = await this.connection.createChannel()
     } catch (error) {
       return ''
