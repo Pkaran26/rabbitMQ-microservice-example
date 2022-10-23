@@ -1,19 +1,22 @@
 const express = require('express')
 const cors = require('cors')
 const rmqServer = require('./rmq-server')
-const serviceManager = require('./service-manager')
+const blogManager = require('./services/blog-manager')
+const shopManager = require('./services/shop-manager')
 const clientService = require('./client')
 const fs = require('fs')
 
 const app = express()
 rmqServer()
-serviceManager()
+blogManager()
+shopManager()
 
 app.use(express.json())
 app.use(cors())
 
-app.get('/api/:api/:type', async (req, res)=>{
-  await clientService(req.params.api, req.params.type, (data)=>{
+app.get('/api/:service_type/:api_name/:type', async (req, res)=>{
+  const {service_type, api_name, type} = req.params
+  await clientService(service_type, api_name, type, (data)=>{
     res.json(JSON.parse(data))
   })
 })

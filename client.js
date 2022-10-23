@@ -1,6 +1,6 @@
 const RabbitMQ = require('./rabbitmq')
 
-const clientService = async (serviceType, type, callback)=>{
+const clientService = async (serviceType, apiName, type, callback)=>{
   const queue = 'tasks'
   try {
     const rabbitMQ = new RabbitMQ()
@@ -8,7 +8,7 @@ const clientService = async (serviceType, type, callback)=>{
     const q = await rabbitMQ.createClientQueue()
     const correlationId = rabbitMQ.generateUuid()
 
-    rabbitMQ.sendToServer(serviceType, queue, q, correlationId)
+    rabbitMQ.sendToServer(JSON.stringify({serviceType, apiName}), queue, q, correlationId)
 
     if (type == 'async') {
       callback(JSON.stringify({

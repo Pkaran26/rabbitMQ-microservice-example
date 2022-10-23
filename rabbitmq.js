@@ -1,5 +1,6 @@
 const amqplib = require('amqplib')
-var fs = require('fs')
+const fs = require('fs')
+const { v4: uuidv4 } = require('uuid')
 
 class RabbitMQ {
   constructor () {
@@ -36,7 +37,7 @@ class RabbitMQ {
   }
 
   generateUuid () {
-    return Math.random().toString() + Math.random().toString() + Math.random().toString()
+    return uuidv4()
   }
 
   addToCache (jobID, payload) {
